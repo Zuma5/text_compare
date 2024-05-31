@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Сравнение текстов</title>
+    <style>
+        body {
+            font-family: math;
+            text-align: center;
+            background-color: #8BB4C7; 
+            color: #000;
+        }
+        h1 {
+            text-shadow: 0px -2px grey;
+            margin-bottom: 20px;
+        }
+        textarea {
+            width: 45%;
+            height: 250px;
+            margin: 20px;
+            border: 2px solid #333;
+            background-color: #E0E1E3;
+            color: #333;
+            font-size: 14px;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
+            overflow-y: scroll;
+            scrollbar-width: thin;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4D7952;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            margin-top: 20px;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
+        }
+        button:hover {
+            background-color: #C3D3C6;
+            color: #4D7952;
+        }
+        .result {
+            margin-top: 20px;
+            white-space: pre-wrap;
+            padding: 10px;
+            background-color: #176876;
+            color: #000;
+            border-radius: 10px;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
+            text-align: left;
+        }
+        .added {
+            background-color: #4cff4c;
+            display: inline;
+            position: relative;
+        }
+        .removed {
+            background-color: #ff4c4c;
+            display: inline;
+            position: relative;
+        }
+        .column {
+            display: inline-block;
+            width: 45%;
+            vertical-align: top;
+            padding: 10px;
+            margin: 20px;
+            border: 2px solid #333;
+            background-color: #C3D3C6;
+            color: #000;
+            border-radius: 10px;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
+        }
+        .column1 {
+            display: inline-block;
+            vertical-align: top;
+            padding: 20px;
+            margin: 20px;
+            border: 2px solid #333;
+            background-color: #C3D3C6;
+            color: #000;
+            border-radius: 10px;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
+        }
+        #percentage {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            color: darkslategray;
+            text-shadow: 2px 2px 4px darkgray;
+        }
+        .radio-group {
+            margin: 20px;
+            font-size: 18px;
+        }
+        .radio-group input[type="radio"] {
+            margin-right: 10px;
+        }
+        .radio-group label {
+            margin-right: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Сравнение текстов</h1>
+    <textarea id="text1" placeholder="Введите первый текст здесь..."></textarea>
+    <textarea id="text2" placeholder="Введите второй текст здесь..."></textarea>
+    <button onclick="compareTexts()">Сравнить</button>
+    <div id="percentage">Совпадение: 0%</div>
+    <div class="radio-group">
+        <input type="radio" id="singleView" name="viewType" value="single" checked>
+        <label for="singleView">В одном поле</label>
+        <input type="radio" id="splitView" name="viewType" value="split">
+        <label for="splitView">В двух столбиках</label>
+    </div>
+    <div id="result" class="result"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch.js"></script>
+    <script>
+        document.querySelectorAll('input[name="viewType"]').forEach((radio) => {
+            radio.addEventListener('change', () => compareTexts());
+        });
+
+        function compareTexts() {
+            const text1 = document.getElementById('text1').value;
+            const text2 = document.getElementById('text2').value;
+            const viewType = document.querySelector('input[name="viewType"]:checked').value;
+
+            const dmp = new diff_match_patch();
+            const diff = dmp.diff_main(text1, text2);
+            dmp.diff_cleanupSemantic(diff);
+
+            const result = document.getElementById('result');
+            result.innerHTML = '';
+
+            let totalLength = text1.length;
+            let matchedLength = 0;
+
+            if (viewType === 'single') {
+                const singleColumn = document.createElement('div');
+                singleColumn.classList.add('column1');
+                
+                diff.forEach((part) => {
+                    const span = document.createElement('span');
+                    if (part[0] === 1) {
+                        span.classList.add('added');
+                        span.textContent = part[1];
+                    } else if (part[0] === -1) {
+                        span.classList.add('removed');
+                        span.textContent = part[1];
+                    } else {
+                        span.textContent = part[1];
+                        matchedLength += part[1].length;
+                    }
+                    singleColumn.appendChild(span);
+                });
+
+                result.appendChild(singleColumn);
+            } else {
+                const col1 = document.createElement('div');
+                col1.classList.add('column');
+                const col2 = document.createElement('div');
+                col2.classList.add('column');
+
+                diff.forEach((part) => {
+                    const span1 = document.createElement('span');
+                    const span2 = document.createElement('span');
+
+                    if (part[0] === 1) {
+                        span2.classList.add('added');
+                        span2.textContent = part[1];
+                        span1.textContent = ' ';
+                    } else if (part[0] === -1) {
+                        span1.classList.add('removed');
+                        span1.textContent = part[1];
+                        span2.textContent = ' ';
+                    } else {
+                        span1.textContent = part[1];
+                        span2.textContent = part[1];
+                        matchedLength += part[1].length;
+                    }
+
+                    col1.appendChild(span1);
+                    col2.appendChild(span2);
+                });
+
+                result.appendChild(col1);
+                result.appendChild(col2);
+            }
+
+            const percentage = (matchedLength / totalLength) * 100;
+            document.getElementById('percentage').textContent = `Совпадение: ${percentage.toFixed(2)}%`;
+        }
+    </script>
+</body>
+</html>
